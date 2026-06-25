@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhoneMirror</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span class="logo">📱 PhoneMirror</span>
+  </div>
+
+  <!-- Device selector -->
+  <div class="section-label">DEVICE</div>
+  <div class="device-row" id="device-row">
+    <select id="device-select">
+      <option value="">Scanning…</option>
+    </select>
+    <button class="icon-btn" id="refresh-devices" title="Refresh">↺</button>
+  </div>
+  <div class="device-meta" id="device-meta"></div>
+
+  <!-- Nav -->
+  <div class="section-label" style="margin-top:20px">TOOLS</div>
+  <nav class="nav-list">
+    <button class="nav-btn active" data-panel="mirror">🖥 Mirror</button>
+    <button class="nav-btn" data-panel="files">📂 Files</button>
+    <button class="nav-btn" data-panel="call">📞 Calls</button>
+    <button class="nav-btn" data-panel="keyboard">⌨ Keyboard</button>
+  </nav>
+
+  <!-- Stream quality -->
+  <div class="section-label" style="margin-top:20px">STREAM</div>
+  <div class="quality-row">
+    <label>FPS</label>
+    <input type="range" id="fps-slider" min="1" max="30" value="15" />
+    <span id="fps-value">15</span>
+  </div>
+  <div id="stream-status" class="stream-status disconnected">● Disconnected</div>
+</aside>
+
+<!-- ── MAIN ────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Mirror panel -->
+  <div class="panel active" id="panel-mirror">
+    <div class="phone-shell">
+      <div class="phone-notch"></div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="screen" width="360" height="720"></canvas>
+        <div class="no-signal" id="no-signal">
+          <div class="no-signal-icon">📵</div>
+          <div>No device connected</div>
+          <div class="hint">Enable USB debugging on your Android phone,<br>then connect via USB and select it from the sidebar.</div>
+        </div>
+      </div>
+      <!-- Hardware buttons -->
+      <div class="hw-buttons">
+        <button class="hw-btn" onclick="sendKey(4)" title="Back">◀</button>
+        <button class="hw-btn" onclick="sendKey(3)" title="Home">●</button>
+        <button class="hw-btn" onclick="sendKey(187)" title="Recents">▬</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Files panel -->
+  <div class="panel" id="panel-files">
+    <div class="panel-card">
+      <div class="panel-title">File Browser</div>
+      <div class="breadcrumb" id="breadcrumb">/sdcard/</div>
+      <div class="file-toolbar">
+        <button class="btn" id="nav-up-btn">⬆ Up</button>
+        <label class="btn upload-btn">
+          ⬆ Upload
+          <input type="file" id="upload-input" style="display:none" multiple />
+        </label>
+      </div>
+      <div class="file-list" id="file-list">
+        <div class="loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call panel -->
+  <div class="panel" id="panel-call">
+    <div class="panel-card">
+      <div class="panel-title">Phone Calls</div>
+      <div class="dialpad">
+        <input type="tel" id="phone-number" placeholder="+91 98765 43210" class="phone-input" />
+        <div class="digit-grid">
+          <button class="digit" onclick="appendDigit('1')">1</button>
+          <button class="digit" onclick="appendDigit('2')">2<span>ABC</span></button>
+          <button class="digit" onclick="appendDigit('3')">3<span>DEF</span></button>
+          <button class="digit" onclick="appendDigit('4')">4<span>GHI</span></button>
+          <button class="digit" onclick="appendDigit('5')">5<span>JKL</span></button>
+          <button class="digit" onclick="appendDigit('6')">6<span>MNO</span></button>
+          <button class="digit" onclick="appendDigit('7')">7<span>PQRS</span></button>
+          <button class="digit" onclick="appendDigit('8')">8<span>TUV</span></button>
+          <button class="digit" onclick="appendDigit('9')">9<span>WXYZ</span></button>
+          <button class="digit" onclick="appendDigit('*')">*</button>
+          <button class="digit" onclick="appendDigit('0')">0<span>+</span></button>
+          <button class="digit" onclick="appendDigit('#')">#</button>
+        </div>
+        <div class="call-actions">
+          <button class="call-btn call" id="call-btn" onclick="startCall()">📞 Call</button>
+          <button class="call-btn hangup" id="hangup-btn" onclick="endCall()">📵 End</button>
+          <button class="digit backspace-btn" onclick="backspaceDigit()">⌫</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard panel -->
+  <div class="panel" id="panel-keyboard">
+    <div class="panel-card">
+      <div class="panel-title">Send Text & Keys</div>
+      <textarea id="text-input" class="text-area" placeholder="Type text to send to device…" rows="5"></textarea>
+      <div class="key-actions">
+        <button class="btn primary" onclick="sendText()">Send Text</button>
+        <button class="btn" onclick="sendKey(66)">↵ Enter</button>
+        <button class="btn" onclick="sendKey(67)">⌫ Delete</button>
+        <button class="btn" onclick="sendKey(4)">Back</button>
+      </div>
+      <div class="section-label" style="margin-top:24px">VOLUME &amp; MEDIA</div>
+      <div class="key-actions" style="margin-top:8px">
+        <button class="btn" onclick="sendKey(24)">🔊 Vol+</button>
+        <button class="btn" onclick="sendKey(25)">🔉 Vol–</button>
+        <button class="btn" onclick="sendKey(164)">🔇 Mute</button>
+        <button class="btn" onclick="sendKey(85)">⏯ Play</button>
+        <button class="btn" onclick="sendKey(87)">⏭ Next</button>
+        <button class="btn" onclick="sendKey(88)">⏮ Prev</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── TOAST ──────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
